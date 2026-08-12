@@ -1,0 +1,124 @@
+<!--
+  এই ফাইলটি স্বতন্ত্র শিডিউল fragment।
+  student-bus-tracker.html এই ফাইলটি fetch() দিয়ে লোড করে
+  Schedule ট্যাবের ভেতরে বসায়। তাই এখানে <html>, <head>, <body> ট্যাগ
+  ব্যবহার করা হয়নি — শুধু .sheet div এবং তার নিজস্ব <style>।
+  (আগে schedule section-এর ভেতরে পুরো একটা আলাদা <html> document বসানো ছিল,
+  যেটা invalid nested HTML ছিল — এখন সেই সমস্যা নেই।)
+-->
+<style>
+  #scheduleFragment .sheet{max-width:1300px;margin:auto;background:#fdfcf7;border:1px solid #999;padding:25px 35px;font-family:"Noto Sans Bengali","SolaimanLipi",Arial,sans-serif;}
+  #scheduleFragment .header{text-align:center;}
+  #scheduleFragment .header h1{font-size:22px;margin:2px 0;}
+  #scheduleFragment .header h2{font-size:20px;margin:2px 0;}
+  #scheduleFragment .memo-row{display:flex;justify-content:space-between;font-size:14px;margin:10px 0;flex-wrap:wrap;gap:6px;}
+  #scheduleFragment .title-box{text-align:center;margin:10px 0;}
+  #scheduleFragment .title-box span{border:1px solid #000;padding:4px 20px;font-size:17px;font-weight:bold;}
+  #scheduleFragment .subtitle{text-align:center;font-size:15px;font-weight:bold;margin-bottom:8px;}
+  #scheduleFragment table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;}
+  #scheduleFragment th,#scheduleFragment td{border:1px solid #444;padding:4px 6px;text-align:center;vertical-align:middle;}
+  #scheduleFragment th{background:#e7e2d3;}
+  #scheduleFragment .section-title{background:#dcd6c2;font-weight:bold;font-size:15px;}
+  #scheduleFragment .note{font-size:12.5px;margin-top:8px;line-height:1.6;}
+  #scheduleFragment .footer{display:flex;justify-content:space-between;margin-top:25px;font-size:13px;flex-wrap:wrap;gap:14px;}
+  #scheduleFragment .footer ul{margin:0;padding-left:18px;}
+  #scheduleFragment .sign{text-align:right;font-size:13px;}
+  #scheduleFragment{overflow-x:auto;}
+  @media (max-width:700px){
+    #scheduleFragment .sheet{padding:15px 12px;}
+    #scheduleFragment table{font-size:11px;}
+  }
+</style>
+
+<div class="sheet">
+
+  <div class="header">
+    <p style="margin:0;font-size:15px;">পরিবহন ও যন্ত্র মেরামত শাখা</p>
+    <h2>হাজী মোহাম্মদ দানেশ বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়, দিনাজপুর</h2>
+  </div>
+
+  <div class="memo-row">
+    <span>স্মারক নং: হাবিপ্রবি/২০২৬/পশা/</span>
+    <span>তারিখ: ২০/০৭/২০২৬ খ্রি:</span>
+  </div>
+
+  <div class="title-box"><span>গাড়ীর সময় সূচী</span></div>
+  <div class="subtitle">রবিবার হতে বৃহস্পতিবার (কার্যকর: ২১/০৭/২০২৬ খ্রীঃ হতে)</div>
+
+  <table>
+    <tr>
+      <th colspan="3" class="section-title">ক্যাম্পাস হতে</th>
+      <th colspan="3" class="section-title">শহর হতে</th>
+    </tr>
+    <tr>
+      <th>ট্রিপের নাম</th><th>ছাড়ার সময়</th><th>গাড়ীর নম্বর</th>
+      <th>ট্রিপের নাম</th><th>ছাড়ার স্থান ও সময়</th><th>গাড়ীর নম্বর</th>
+    </tr>
+    <tr><td>সাধারণ</td><td>সকাল-৬:৪০ মি:</td><td>১৫</td><td>ছাত্র-ছাত্রী</td><td>সকাল: ৭:৫০ মি: বালুবাড়ী (শ.মি.)</td><td>১৫</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>সকাল-৮:০০ টা</td><td>৪,২০</td><td>কর্মকর্তা</td><td>সকাল: ৮:২০ মি: (বালুবাড়ী শ.মি.),</td><td>৪,২০</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>সকাল-৮:০০ টা</td><td>৮</td><td>কর্মচারী</td><td>সকাল- ৮:১৫ মি: (বালুবাড়ী শ.মি.)</td><td>৮</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>সকাল-৮:০০ টা</td><td>১১</td><td>ছাত্র-ছাত্রী</td><td>সকাল-৮:২০মি:(বড়: দিতল-২)(স:৮:৩০মি: সুই:১২)</td><td>১১, দিতল-২</td></tr>
+    <tr><td>শিক্ষক</td><td>সকাল-৮:০০ টা</td><td>১,২,৩,১৫(m-5)</td><td>শিক্ষক</td><td>সকাল- ৮:৩০ মি: (নির্ধারিত রুট)</td><td>(১,১৫)(২,m-5)(৩)</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>সকাল- ৮:৩০ মি:</td><td>৭,১৭</td><td>ছাত্র-ছাত্রী</td><td>সকাল-৯:০০ টা (বড়মাঠ) (স:৯:১৫ মি: টার্মিনাল-৭)</td><td>৭,১৭,দিতল-৩</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>সকাল- ৯:০০ টা</td><td>(সুইহারী ৮,১৬),১৯</td><td>ছাত্র-ছাত্রী</td><td>স:৯:৩০ মি:(বড়:দি:১,১৯)(৯:৩৫মি:সুই:৮,১৬)</td><td>৮,১৬,১৯,দিতল-১</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>সকাল-৯:৩০ মি:</td><td>১৫,২১</td><td>ছাত্র-ছাত্রী</td><td>সকাল-১০:০০ টা: (বড়মাঠ)</td><td>১৫,২১</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>সকাল-১০:০০ টা</td><td>৮,১১,দি:২</td><td>ছাত্র-ছাত্রী</td><td>সকাল-১০:৩০মি:(বড়-দি:২)(সুই:১১)(টার্মি-স:১০.৪৫মি: ৮)</td><td>৮,১১,দি:২</td></tr>
+    <tr><td>ছাত্র-ছাত্র</td><td>সকাল-১০:৩০ মি:</td><td>১৬,১৯,২০</td><td>ছাত্র-ছাত্র</td><td>সকাল-১১:০০ টা: (বড়মাঠ) (টার্মি-স:১১.১৫মি: ১৯)</td><td>১৬,১৯,২০</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>সকাল-১১:০০ টা</td><td>১৭, দিতল-৩</td><td>ছাত্র-ছাত্রী</td><td>সকাল-১১:৩০ মি: (বড়-দি:৩) (টার্মি-১১:৪৫মি:১৭)</td><td>১৭,দিতল-৩</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>সকাল- ১১:৩০ মি:</td><td>১৫,২১</td><td>ছাত্র-ছাত্রী</td><td>দুপুর- ১২:০০ টা (বড়মাঠ)</td><td>১৫,২১</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>দুপুর- ১২:০০ টা</td><td>১৬,১৯</td><td>ছাত্র-ছাত্রী</td><td>দুপুর- ১২:৩০ মি: (বড়মাঠ)</td><td>১৬,১৯</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>দুপুর- ১২:৩০ মি:</td><td>১৭,দিতল-১</td><td>ছাত্র-ছাত্রী</td><td>দুপুর- ১:০০ টা: (বড়মাঠ)</td><td>১৭,দিতল-১</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>দুপুর- ১:০০ টা</td><td>(টার্মি-১৫),২১,২০</td><td>ছাত্র-ছাত্রী</td><td>দুপুর- ১:৩০ মি: (বড়মাঠ)</td><td>১৫,২১,২০</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>দুপুর- ১:৩০ মি:</td><td>দিতল-২</td><td>ছাত্র-ছাত্রী</td><td>দুপুর- ২:০০ টা (বড়মাঠ)</td><td>দিতল-২</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>দুপুর- ২:০০ টা</td><td>৮,১১,১৯</td><td>ছাত্র-ছাত্রী</td><td>দুপুর- ২:৩০ মি: (বড়মাঠ)</td><td>১১,১৯</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>দুপুর- ২:৩০ মি:</td><td>৭,দিতল-৩</td><td>ছাত্র-ছাত্রী</td><td>দুপুর- ৩:০০ টা (বড়মাঠ)</td><td>দিতল-৩</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>দুপুর- ৩:০০ টা</td><td>১৬,১৭</td><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৩:৩০ মি: (বড়মাঠ)</td><td>১৬,১৭</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>দুপুর- ৩:৩০ মি:</td><td>২১,দিতল-১</td><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৪:০০ টা (বড়মাঠ)</td><td>২১,দিতল-১</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৪:০৫ মি:</td><td>১১,১৯, দিতল-২</td><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৪:৩০ মি: (বড়মাঠ)</td><td>১১, দিতল-২</td></tr>
+    <tr><td>শিক্ষক</td><td>বিকাল- ৪:০৫ মি:</td><td>১,২,৩,১৫(m-5)</td><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৫:০০ টা (বড়মাঠ)</td><td>১৫</td></tr>
+    <tr><td>কর্মকর্তা কর্মচারী</td><td>বিকাল- ৪:০৫ মি:</td><td>৪,৮,২০</td><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৫:০০ টা (বড়মাঠ)</td><td>৮</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৪:৩০ মি:</td><td>১৭, দিতল-৩</td><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৫:৩০ মি: (বড়মাঠ)</td><td>১৭,দিতল-৩</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৫:০০ টা</td><td>২১,দি:-১</td><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৬:০০ টা (বড়মাঠ)</td><td>২১,দি:-১</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৫:৩০ মি:</td><td>১১,১৬,১৯</td><td>ছাত্র-ছাত্রী</td><td>সন্ধ্যা- ৬:৩০ মি: (বড়মাঠ)</td><td>১১,১৯</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৬:০০ টা</td><td>৮,দিতল-২</td><td>ছাত্র-ছাত্রী</td><td>রাত- ৭:০০ টা (বড়মাঠ)</td><td>৮, দিতল-২</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>সন্ধ্যা-৬:৩০ মি:</td><td>১৭,দিতলবাস-৩</td><td>ছাত্র-ছাত্রী</td><td>রাত- ৭:৩০ মি: (বড়মাঠ)</td><td>১৬,১৭, (২০ ছাত্রী)</td></tr>
+    <tr><td>ছাত্র-ছাত্রী</td><td>রাত- ৭:০০ টা</td><td>২১,দিতলবাস-১</td><td>ছাত্র-ছাত্রী</td><td>রাত- ৮:০০ টা (বড়মাঠ)</td><td>২১,দিতলবাস-৩</td></tr>
+    <tr><td>সাধারণ</td><td>রাত- ৭:৩০ মি:</td><td>বিআরটিসি ডিপো পর্যন্ত</td><td>ছাত্র-ছাত্রী</td><td>রাত- ৯:০০ টা (বড়মাঠ)</td><td>দিতলবাস-১</td></tr>
+    <tr><td>সাধারণ</td><td>রাত- ৮:৩০ মি:</td><td></td><td colspan="3">দিতলবাস- ৩ (বিআরটিসি ডিপো পর্যন্ত)</td></tr>
+    <tr><td></td><td>রাত- ৯:৩০ মি:</td><td></td><td colspan="3">দিতলবাস- ১ (বিআরটিসি ডিপো পর্যন্ত)</td></tr>
+  </table>
+
+  <table>
+    <tr><th colspan="6" class="section-title">বিশেষ ট্রিপ</th></tr>
+    <tr>
+      <th>বার</th><th>যাত্রী</th><th>ছাড়ার সময়</th>
+      <th>বার</th><th>যাত্রী</th><th>ছাড়ার সময়</th>
+    </tr>
+    <tr><td>শুক্রবার</td><td>শিক্ষক, কর্মকর্তা,কর্মচারী</td><td>সকাল- ৯:০০ টা / ১৫</td><td>শুক্রবার</td><td>শিক্ষক, কর্মকর্তা,কর্মচারী</td><td>সকাল- ১১:০০ টা / ১৫</td></tr>
+    <tr><td>শনিবার</td><td>শিক্ষক ও কর্মকর্তা</td><td>বিকাল- ৪:০০টা / ১৯</td><td>শনিবার</td><td>শিক্ষক ও কর্মকর্তা</td><td>বিকাল- ৬:০০ টা বড়মাঠ / ১৯</td></tr>
+    <tr><td>শনিবার</td><td>কর্মচারী</td><td>বিকাল- ৪:০০টা / ১১</td><td>শনিবার</td><td>কর্মচারী</td><td>বিকাল- ৬:০০ টা বড়মাঠ / ১১</td></tr>
+    <tr><td>শনিবার</td><td>ছাত্র-ছাত্রী</td><td>বিকাল- ৪:০০টা / ৮,১৭,২১</td><td>শনিবার</td><td>ছাত্র-ছাত্রী</td><td>রাত- ৭:০০ টা বড়মাঠ / ৮,১৭,২১</td></tr>
+    <tr><td>মঙ্গলবার</td><td>শিক্ষক ও কর্মকর্তা</td><td>বিকাল- ৪:০০ টা / ১৬,২০</td><td>মঙ্গলবার</td><td>শিক্ষক ও কর্মকর্তা</td><td>বিকাল- ৬:০০ টা বড়মাঠ / মাইজে-৫</td></tr>
+  </table>
+
+  <div class="note">
+    ***ছাত্র-ছাত্রীদের গাড়ীগুলি বাইপাস হয়ে চলাচল করবে এবং শিক্ষক/কর্মকর্তা ও কর্মচারীগণের গাড়ীগুলি নির্ধারিত রুটে চলাচল করবে।<br>
+    বিশেষ দ্রষ্টব্য: প্রয়োজনে ট্রিপের সংখ্যা কম বা বেশী হতে পারে।
+  </div>
+
+  <div class="footer">
+    <div>
+      <p><u>সদয় জ্ঞাতার্থে ও বহুল প্রচারের জন্য অনুলিপি (জ্যেষ্ঠতার ভিত্তিতে নহে):</u></p>
+      <ul>
+        <li>সহ-সভাপতি, পরিবহন কমিটি, হাবিপ্রবি, দিনাজপুর।</li>
+        <li>ডিন, সকল অনুষদ / চেয়ারম্যান, সকল বিভাগ / রেজিস্ট্রার / লাইব্রেরী / সকল হল সুপার / প্রক্টর / সকল পরিচালক / পরীক্ষা নিয়ন্ত্রক।</li>
+        <li>সকল শাখা প্রধান / আইটি সেল।</li>
+        <li>নোটিশ বোর্ড।</li>
+      </ul>
+    </div>
+    <div class="sign">
+      <p>পরিচালক (পরিবহন)<br>হাবিপ্রবি, দিনাজপুর।</p>
+    </div>
+  </div>
+
+</div>
