@@ -794,12 +794,27 @@ const stopCoords = {
             // history ঠিকমতো লেখা/দেখানো হতো (কারণ history আলাদা push() কল, আলাদা path,
             // এবং আলাদা rules-এর আওতায় থাকতে পারে)। এখন error explicit log করা হচ্ছে
             // যাতে বোঝা যায় সমস্যাটা read-permission নাকি অন্য কিছু।
+            // 🚀 Cache: পেজ লোড হওয়ার সাথে সাথে (Firebase connect হওয়ার আগেই) লোকাল
+            // storage-এ থাকা শেষ bus data থেকে render করা হচ্ছে, যাতে প্রথমবার
+            // "কোনো বাস নেই" খালি স্ক্রিন না দেখায়। Firebase connect হলেই live data
+            // এসে এটা replace করে দেবে। এটা RTDB-এর বিল/লোড কমায় না (একটাই persistent
+            // listener থাকে, বারবার query হয় না) — শুধু প্রথম লোডের UX ভালো করে।
+            const BUSES_CACHE_KEY = "cachedBusesData";
+            try {
+                const cachedBuses = localStorage.getItem(BUSES_CACHE_KEY);
+                if (cachedBuses) {
+                    window.buses = JSON.parse(cachedBuses);
+                    if (typeof window.renderBuses === "function") window.renderBuses();
+                }
+            } catch (e) { /* corrupt cache বা localStorage ব্লক থাকলে এড়িয়ে যাও */ }
+
             const busesRef = ref(db, "buses");
             onValue(busesRef, (snapshot) => {
                 const data = snapshot.val();
                 window.buses = data || { campus_city: {}, boromath_campus: {} };
                 if (!window.buses.campus_city) window.buses.campus_city = {};
                 if (!window.buses.boromath_campus) window.buses.boromath_campus = {};
+                try { localStorage.setItem(BUSES_CACHE_KEY, JSON.stringify(window.buses)); } catch (e) {}
                 if (typeof window.renderBuses === "function") window.renderBuses();
             }, (err) => {
                 console.error("❌ buses/ read failed — Firebase rules-এ 'buses' path read করার permission আছে কিনা যাচাই করো:", err);
@@ -822,22 +837,23 @@ const stopCoords = {
             const myPresenceId = "u_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
             const myPresenceRef = ref(db, `presence/${myPresenceId}`);
             const connectedRef = ref(db, ".info/connected");
+            const countEl = document.getElementById("activeUsersCount");
+            const alarmEl = document.getElementById("activeUsersAlarm");
 
-            onValue(connectedRef, (snap) => {
-                if (snap.val() === true) {
-                    // সংযোগ বিচ্ছিন্ন হলে (ট্যাব বন্ধ, নেট চলে যাওয়া) সার্ভার নিজে থেকেই এই এন্ট্রি মুছে দেবে
-                    onDisconnect(myPresenceRef).remove().then(() => {
-                        set(myPresenceRef, { since: serverTimestamp() }).catch(() => {});
-                    }).catch(() => {});
+            // 🚀 Cache: localStorage-এ শেষ জানা count রাখা হচ্ছে, যাতে Firebase-এর
+            // সাথে সংযোগ হওয়ার আগেই (যেটা কয়েক মুহূর্ত সময় নিতে পারে) পুরনো "..."
+            // না দেখিয়ে শেষবারের count সাথে সাথে দেখানো যায়। এটা Firebase-এর
+            // read/bandwidth কমায় না (presence-এর জন্য একটাই live listener থাকে,
+            // বারবার fetch হয় না) — এটা শুধু প্রথম লোডে UX ভালো করে।
+            const PRESENCE_CACHE_KEY = "cachedActiveUserCount";
+            try {
+                const cached = localStorage.getItem(PRESENCE_CACHE_KEY);
+                if (cached !== null && countEl) {
+                    countEl.textContent = `${cached} জন এখন সাইটে আছে (সর্বশেষ জানা তথ্য)`;
                 }
-            });
+            } catch (e) { /* localStorage ব্লক করা থাকলে চুপচাপ এড়িয়ে যাও */ }
 
-            const presenceListRef = ref(db, "presence");
-            onValue(presenceListRef, (snap) => {
-                const val = snap.val();
-                const count = val ? Object.keys(val).length : 0;
-                const countEl = document.getElementById("activeUsersCount");
-                const alarmEl = document.getElementById("activeUsersAlarm");
+            function renderActiveCount(count) {
                 if (countEl) countEl.textContent = `${count} জন এখন সাইটে আছে`;
                 if (alarmEl) {
                     if (count >= ACTIVE_USER_ALARM_THRESHOLD) {
@@ -847,6 +863,35 @@ const stopCoords = {
                         alarmEl.style.display = "none";
                     }
                 }
+                try { localStorage.setItem(PRESENCE_CACHE_KEY, String(count)); } catch (e) {}
+            }
+
+            // 🐛 বাগ ফিক্স: আগে এই দুইটা listener-এ কোনো error callback ছিল না।
+            // Firebase rules-এ "presence" path allow করা না থাকলে (permission-denied)
+            // listener চুপচাপ fail করতো — কোনো error দেখাও যেত না, count-ও কখনো
+            // update হতো না, তাই "..." স্থায়ীভাবে দেখাতে থাকতো (তুমি যেটা দেখেছিলে)।
+            // এখন error explicit console-এ log হচ্ছে এবং ব্যবহারকারীকেও জানানো হচ্ছে।
+            onValue(connectedRef, (snap) => {
+                if (snap.val() === true) {
+                    // সংযোগ বিচ্ছিন্ন হলে (ট্যাব বন্ধ, নেট চলে যাওয়া) সার্ভার নিজে থেকেই এই এন্ট্রি মুছে দেবে
+                    onDisconnect(myPresenceRef).remove().then(() => {
+                        set(myPresenceRef, { since: serverTimestamp() }).catch((err) => {
+                            console.error("❌ presence write failed — Firebase rules-এ 'presence' path-এ write permission আছে কিনা যাচাই করো:", err);
+                        });
+                    }).catch(() => {});
+                }
+            }, (err) => {
+                console.error("❌ .info/connected read failed:", err);
+            });
+
+            const presenceListRef = ref(db, "presence");
+            onValue(presenceListRef, (snap) => {
+                const val = snap.val();
+                const count = val ? Object.keys(val).length : 0;
+                renderActiveCount(count);
+            }, (err) => {
+                console.error("❌ presence/ read failed — Firebase rules-এ 'presence' path read করার permission আছে কিনা যাচাই করো:", err);
+                if (countEl) countEl.textContent = "⚠️ Live count লোড করা যায়নি";
             });
 
             // 🕘 Report পেজে সর্বশেষ ২০টা history entry দেখানো (দুই রুট মিলিয়ে) —
