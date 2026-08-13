@@ -472,11 +472,24 @@
             btn.textContent = "⏳ Updating...";
             try {
                 await window.firebaseSaveBus(direction, busName, busData);
+
+                // 🔧 বাগ ফিক্স: write সফল হওয়ার পরও Firebase-এর onValue() listener
+                // মাঝে মাঝে দেরি করে ফায়ার করে (network/rules propagation delay), অথবা
+                // buses/ path-এ read rule আলাদাভাবে ব্লকড থাকলে listener কখনোই ডেটা
+                // ফেরত পায় না। তাই write সফল হওয়ার সাথে সাথেই local window.buses-এ
+                // optimistic update করে দেওয়া হচ্ছে — Firebase listener দেরি করলেও বা
+                // ফেইল করলেও ইউজার সাথে সাথে নিজের আপডেট Live-এ দেখতে পাবে।
+                if (!window.buses[direction]) window.buses[direction] = {};
+                const safeName = busName.replace(/[.#$[\]]/g, "_");
+                window.buses[direction][safeName] = busData;
+                const opp = direction === "campus_city" ? "boromath_campus" : "campus_city";
+                if (window.buses[opp]) delete window.buses[opp][safeName];
+
                 alert("✅ বাসের অবস্থান আপডেট হয়েছে");
                 changeDirection(direction);
             } catch (error) {
                 console.error("Firebase save error:", error);
-                alert("❌ Firebase-এ update করা যায়নি");
+                alert("❌ Firebase-এ update করা যায়নি: " + (error && error.message ? error.message : "অজানা সমস্যা"));
             } finally {
                 btn.disabled = false;
                 btn.textContent = "📡 Update Bus Location";
@@ -608,6 +621,13 @@ const stopCoords = {
 
             try {
                 await window.firebaseSaveBus(direction, busName, busData);
+                // 🔧 এখানেও optimistic update — submitReport()-এর মতো একই কারণে
+                if (!window.buses[direction]) window.buses[direction] = {};
+                const safeName2 = busName.replace(/[.#$[\]]/g, "_");
+                window.buses[direction][safeName2] = busData;
+                const opp2 = direction === "campus_city" ? "boromath_campus" : "campus_city";
+                if (window.buses[opp2]) delete window.buses[opp2][safeName2];
+
                 gpsLastSentStop = match.stopName;
                 gpsLastSentTime = now;
                 changeDirection(direction);
@@ -723,15 +743,30 @@ const stopCoords = {
             // "LIVE" থাকতে পারবে না। তাই কোনো দিকে বাস সেভ করার আগে সেই একই বাস-নাম
             // উলটো দিক থেকে মুছে দেওয়া হচ্ছে — বাস একটা সময়ে একটাই দিকে চলতে পারে।
             const oppositeDirection = { campus_city: "boromath_campus", boromath_campus: "campus_city" };
+            // 🐛 আসল বাগের কারণ (rules.json থেকে ধরা পড়েছে):
+            // buses/$direction/$busName/time ফিল্ডে validation rule আছে —
+            //   "newData.val() <= now + 60000"
+            // এখানে `now` মানে Firebase SERVER-এর সময়, কিন্তু কোড client-এর
+            // Date.now() পাঠাচ্ছিল। ইউজারের ফোনের ঘড়ি যদি server-এর চেয়ে
+            // এক মিনিটের বেশি এগিয়ে থাকে (মোবাইলে এটা প্রায়ই হয়), তাহলে
+            // পুরো write-টাই validation-এ silently reject হয়ে যেত — অথচ
+            // history-তে কোনো time-constraint না থাকায় সেটা ঠিকই লেখা হতো।
+            // এই কারণেই History-তে দেখাতো, Live-এ দেখাতো না।
+            // ফিক্স: buses/ path-এ client time-এর বদলে serverTimestamp()
+            // পাঠানো হচ্ছে — এটা সবসময় Firebase server-এর নিজস্ব সময়, তাই
+            // rule কখনো fail করবে না।
             window.firebaseSaveBus = async (direction, busName, busData) => {
                 const safeBusName = busName.replace(/[.#$[\]]/g, "_");
                 const opp = oppositeDirection[direction];
+                const busDataForFirebase = { ...busData, time: serverTimestamp() };
                 await Promise.all([
-                    set(ref(db, `buses/${direction}/${safeBusName}`), busData),
+                    set(ref(db, `buses/${direction}/${safeBusName}`), busDataForFirebase),
                     remove(ref(db, `buses/${opp}/${safeBusName}`)).catch(() => {}),
                     // 🕘 Update history — append-only log (security rules-এ এডিট/ডিলিট ব্লক করা)।
                     // প্রতিটা আপডেট এখানে জমা থাকে, তাই "কে, কখন, কী আপডেট দিলো" ট্র্যাক করা যায়
                     // এবং ভুল/সন্দেহজনক প্যাটার্ন পরে যাচাই করা সহজ হয়।
+                    // history-তে client time-ই রাখা হচ্ছে (ওই path-এ time-এর কোনো
+                    // validation constraint নেই, তাই এটা সমস্যা করে না)।
                     push(ref(db, `history/${direction}/${safeBusName}`), busData).catch(() => {})
                 ]);
             };
