@@ -488,16 +488,16 @@
         // প্রতিটা স্টপে বাস্তবে দাঁড়িয়ে Google Maps app খুলে ঐ জায়গার উপর
         // long-press করলে নিচে lat/lng দেখাবে (কপি করে বসাও)। ভুল কোঅর্ডিনেট
         // থাকলে ভুল স্টপ ম্যাচ হবে, তাই real data ছাড়া এই ফিচার চালু করা ঠিক না।
-        const stopCoords = {
-            "Campus": { lat: 25.6980, lng: 88.6550 },        // HSTU campus gate (approx, যাচাই করে নাও)
-            "Gopalganj": { lat: null, lng: null },            // TODO: বসাও
-            "College-mor": { lat: null, lng: null },          // TODO: বসাও
-            "Bus Terminal": { lat: null, lng: null },         // TODO: বসাও
-            "Bot-toli": { lat: null, lng: null },             // TODO: বসাও
-            "Shahi-Masjid": { lat: null, lng: null },         // TODO: বসাও
-            "Bolair-mor": { lat: null, lng: null },           // TODO: বসাও
-            "Sadar-hospital": { lat: 25.6106, lng: 88.6551 }, // Dinajpur Sadar hospital এলাকা (approx, যাচাই করে নাও)
-            "Boromath": { lat: null, lng: null }              // TODO: বসাও
+const stopCoords = {
+            "Campus": { lat: 25.697690500130346, lng: 88.65448549537712 },        // HSTU campus gate (approx, যাচাই করে নাও)
+            "Gopalganj": { lat: 25.673389892453613, lng: 88.65179892430344 },            // TODO: বসাও
+            "College-mor": { lat: 25.650351762928324, lng: 88.64662672476703 },          // TODO: বসাও
+            "Bus Terminal": { lat: 25.643864210342443, lng: 88.64742824920896 },         // TODO: বসাও
+            "Bot-toli": { lat: 25.63364260972453, lng: 88.64995461755205 },             // TODO: বসাও
+            "Shahi-Masjid": { lat: 25.630966192878212, lng: 88.64420455841875 },         // TODO: বসাও
+            "Bolair-mor": { lat: 25.628444149292477, lng: 88.64211458615377 },           // TODO: বসাও
+            "Sadar-hospital": { lat: 25.62621127615595, lng: 88.63699018115452 }, // Dinajpur Sadar hospital এলাকা (approx, যাচাই করে নাও)
+            "Boromath": { lat: 25.62239329836372, lng: 88.63502245450039 }              // TODO: বসাও
         };
 
         // Haversine — দুই GPS পয়েন্টের মধ্যে দূরত্ব (মিটারে)
