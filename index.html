@@ -235,6 +235,11 @@
     <header>
         <h1>🚌 Student Bus Tracker</h1>
         <p>HSTU • শিক্ষার্থীদের জন্য বাস তথ্য</p>
+        <div id="authBox" style="margin-top:12px;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap">
+            <span id="authStatus" style="color:#fff;font-size:13px;opacity:.9">চেক করা হচ্ছে...</span>
+            <button id="loginBtn" onclick="doLogin()" style="display:none;background:#fff;color:#0a5c46;border:none;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer">🔐 Google দিয়ে লগইন করো</button>
+            <button id="logoutBtn" onclick="doLogout()" style="display:none;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.6);padding:8px 16px;border-radius:8px;cursor:pointer">লগআউট</button>
+        </div>
     </header>
     <nav>
         <button class="active" onclick="showPage('live',this)">🟢 Live</button>
@@ -264,6 +269,9 @@
         <section id="report" class="page">
             <div class="card">
                 <h2>📡 বাসের বর্তমান অবস্থান জানান</h2>
+                <div id="reportLoginNotice" style="display:none;background:#fff4e5;border-left:4px solid #ffa500;padding:12px 14px;border-radius:6px;margin-bottom:16px;font-size:14px;color:#7a5200">
+                    ⚠️ Update পাঠাতে হলে আগে Google দিয়ে লগইন করতে হবে (উপরে "লগইন করো" বাটনে চাপো)। এটা ভুল/ফেক আপডেট ঠেকাতে সাহায্য করে।
+                </div>
                 <label>যাত্রার দিক</label>
                 <select id="directionSelect" onchange="updateBusOptions()">
                     <option value="campus_city">🏫 ক্যাম্পাস → শহর</option>
@@ -283,6 +291,11 @@
                         onclick="toggleGpsShare()">📍 লোকেশন শেয়ার শুরু করো</button>
                     <div id="gpsStatus" style="margin-top:10px;font-size:14px;color:#777"></div>
                 </div>
+            </div>
+
+            <div class="card" id="historyCard" style="margin-top:16px">
+                <h2>🕘 Update History (সর্বশেষ ২০টা)</h2>
+                <div id="historyList" style="font-size:13px;color:#555;max-height:260px;overflow-y:auto"></div>
             </div>
         </section>
     </div>
@@ -432,6 +445,10 @@
                 alert("❌ Firebase এখনো লোড হয়নি বা লোড করা যায়নি। ইন্টারনেট সংযোগ চেক করুন এবং পাতাটি রিলোড করুন।");
                 return;
             }
+            if (!window.currentUser) {
+                alert("🔐 আগে Google দিয়ে লগইন করো — ভুল/ফেক আপডেট ঠেকাতে এখন login বাধ্যতামূলক।");
+                return;
+            }
             const direction = document.getElementById("directionSelect").value;
             const busName = busNames[document.getElementById("busSelect").value];
             const stopIndex = Number(document.getElementById("stopSelect").value);
@@ -441,7 +458,8 @@
                 name: busName,
                 stopIndex: stopIndex,
                 stopName: stops[stopIndex],
-                time: Date.now()
+                time: Date.now(),
+                updatedBy: window.currentUser.email || window.currentUser.uid
             };
 
             btn.disabled = true;
@@ -470,16 +488,16 @@
         // প্রতিটা স্টপে বাস্তবে দাঁড়িয়ে Google Maps app খুলে ঐ জায়গার উপর
         // long-press করলে নিচে lat/lng দেখাবে (কপি করে বসাও)। ভুল কোঅর্ডিনেট
         // থাকলে ভুল স্টপ ম্যাচ হবে, তাই real data ছাড়া এই ফিচার চালু করা ঠিক না।
-       const stopCoords = {
-            "Campus": { lat: 25.697690500130346, lng: 88.65448549537712 },        // HSTU campus gate (approx, যাচাই করে নাও)
-            "Gopalganj": { lat: 25.673389892453613, lng: 88.65179892430344 },            // TODO: বসাও
-            "College-mor": { lat: 25.650351762928324, lng: 88.64662672476703 },          // TODO: বসাও
-            "Bus Terminal": { lat: 25.643864210342443, lng: 88.64742824920896 },         // TODO: বসাও
-            "Bot-toli": { lat: 25.63364260972453, lng: 88.64995461755205 },             // TODO: বসাও
-            "Shahi-Masjid": { lat: 25.630966192878212, lng: 88.64420455841875 },         // TODO: বসাও
-            "Bolair-mor": { lat: 25.628444149292477, lng: 88.64211458615377 },           // TODO: বসাও
-            "Sadar-hospital": { lat: 25.62621127615595, lng: 88.63699018115452 }, // Dinajpur Sadar hospital এলাকা (approx, যাচাই করে নাও)
-            "Boromath": { lat: 25.62239329836372, lng: 88.63502245450039 }              // TODO: বসাও
+        const stopCoords = {
+            "Campus": { lat: 25.6980, lng: 88.6550 },        // HSTU campus gate (approx, যাচাই করে নাও)
+            "Gopalganj": { lat: null, lng: null },            // TODO: বসাও
+            "College-mor": { lat: null, lng: null },          // TODO: বসাও
+            "Bus Terminal": { lat: null, lng: null },         // TODO: বসাও
+            "Bot-toli": { lat: null, lng: null },             // TODO: বসাও
+            "Shahi-Masjid": { lat: null, lng: null },         // TODO: বসাও
+            "Bolair-mor": { lat: null, lng: null },           // TODO: বসাও
+            "Sadar-hospital": { lat: 25.6106, lng: 88.6551 }, // Dinajpur Sadar hospital এলাকা (approx, যাচাই করে নাও)
+            "Boromath": { lat: null, lng: null }              // TODO: বসাও
         };
 
         // Haversine — দুই GPS পয়েন্টের মধ্যে দূরত্ব (মিটারে)
@@ -521,6 +539,10 @@
         function startGpsShare() {
             if (!navigator.geolocation) {
                 alert("❌ এই ব্রাউজারে GPS/Location সাপোর্ট নেই।");
+                return;
+            }
+            if (!window.currentUser) {
+                alert("🔐 আগে Google দিয়ে লগইন করো — ভুল/ফেক আপডেট ঠেকাতে এখন login বাধ্যতামূলক।");
                 return;
             }
             const busSelectEl = document.getElementById("busSelect");
@@ -570,10 +592,13 @@
             // শুধু স্টপ বদলালে, অথবা ২ মিনিট পার হয়ে গেলে (heartbeat) — তবেই write হবে।
             // প্রতি GPS reading-এ (যেটা প্রতি কয়েক সেকেন্ডে আসতে পারে) write হয় না।
             if (!stopChanged && !heartbeatDue) return;
-            if (!window.firebaseSaveBus) return;
+            if (!window.firebaseSaveBus || !window.currentUser) return;
 
             const busName = busNames[document.getElementById("busSelect").value];
-            const busData = { name: busName, stopIndex: match.stopIndex, stopName: match.stopName, time: now };
+            const busData = {
+                name: busName, stopIndex: match.stopIndex, stopName: match.stopName, time: now,
+                updatedBy: window.currentUser.email || window.currentUser.uid
+            };
 
             try {
                 await window.firebaseSaveBus(direction, busName, busData);
@@ -599,7 +624,8 @@
     <script type="module">
         try {
             const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js");
-            const { getDatabase, ref, set, remove, onValue } = await import("https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js");
+            const { getDatabase, ref, set, get, remove, onValue, push, query, limitToLast } = await import("https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js");
+            const { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js");
 
             const firebaseConfig = {
                 apiKey: "AIzaSyCUO8wN4B_6x_9FOQEm75SafEEjapj9DJs",
@@ -614,6 +640,72 @@
 
             const app = initializeApp(firebaseConfig);
             const db = getDatabase(app);
+            const auth = getAuth(app);
+            const provider = new GoogleAuthProvider();
+
+            // ==========================================================
+            // 🔐 Authentication (Google sign-in) — Phone/SMS OTP এড়িয়ে
+            // চলা হয়েছে কারণ সেটা ফ্রি না। Google sign-in Spark প্ল্যানে
+            // ৫০,০০০ MAU পর্যন্ত সম্পূর্ণ ফ্রি।
+            // ==========================================================
+            window.doLogin = async () => {
+                try {
+                    await signInWithPopup(auth, provider);
+                } catch (err) {
+                    console.error("Login error:", err);
+                    alert("❌ লগইন করা যায়নি। আবার চেষ্টা করো।");
+                }
+            };
+            window.doLogout = async () => {
+                await signOut(auth);
+            };
+
+            onAuthStateChanged(auth, async (user) => {
+                const statusEl = document.getElementById("authStatus");
+                const loginBtn = document.getElementById("loginBtn");
+                const logoutBtn = document.getElementById("logoutBtn");
+                const notice = document.getElementById("reportLoginNotice");
+
+                if (user) {
+                    window.currentUser = user;
+                    loginBtn.style.display = "none";
+                    logoutBtn.style.display = "inline-block";
+                    if (notice) notice.style.display = "none";
+
+                    // users/{uid}-এ প্রোফাইল না থাকলে প্রথমবার তৈরি হবে (role: "student" default)।
+                    // role নিজে থেকে "admin"/"moderator" বদলানো যাবে না — শুধু বিদ্যমান admin পারবে
+                    // (এটা security rules-এ প্রোটেক্ট করা, তাই এখানে শুধু email/name সেট করা হচ্ছে)।
+                    const userRef = ref(db, `users/${user.uid}`);
+                    try {
+                        const snap = await get(userRef);
+                        if (!snap.exists()) {
+                            await set(userRef, {
+                                email: user.email || "",
+                                name: user.displayName || "",
+                                role: "student",
+                                createdAt: Date.now()
+                            });
+                            window.currentRole = "student";
+                        } else {
+                            window.currentRole = snap.val().role || "student";
+                        }
+                    } catch (e) {
+                        console.error("User profile load error:", e);
+                        window.currentRole = "student";
+                    }
+
+                    const roleBadge = window.currentRole === "admin" ? " 👑 Admin"
+                        : window.currentRole === "moderator" ? " 🛡️ Moderator" : "";
+                    statusEl.textContent = `স্বাগতম, ${user.displayName || user.email}${roleBadge}`;
+                } else {
+                    window.currentUser = null;
+                    window.currentRole = null;
+                    loginBtn.style.display = "inline-block";
+                    logoutBtn.style.display = "none";
+                    statusEl.textContent = "লগইন করা নেই";
+                    if (notice) notice.style.display = "block";
+                }
+            });
 
             // 🐛 ফিক্স: একটা বাস একইসাথে দুই রুটে (campus_city ও boromath_campus)
             // "LIVE" থাকতে পারবে না। তাই কোনো দিকে বাস সেভ করার আগে সেই একই বাস-নাম
@@ -624,7 +716,11 @@
                 const opp = oppositeDirection[direction];
                 await Promise.all([
                     set(ref(db, `buses/${direction}/${safeBusName}`), busData),
-                    remove(ref(db, `buses/${opp}/${safeBusName}`)).catch(() => {})
+                    remove(ref(db, `buses/${opp}/${safeBusName}`)).catch(() => {}),
+                    // 🕘 Update history — append-only log (security rules-এ এডিট/ডিলিট ব্লক করা)।
+                    // প্রতিটা আপডেট এখানে জমা থাকে, তাই "কে, কখন, কী আপডেট দিলো" ট্র্যাক করা যায়
+                    // এবং ভুল/সন্দেহজনক প্যাটার্ন পরে যাচাই করা সহজ হয়।
+                    push(ref(db, `history/${direction}/${safeBusName}`), busData).catch(() => {})
                 ]);
             };
 
@@ -656,6 +752,42 @@
             });
 
             setInterval(() => { if (window.buses && window.renderBuses) window.renderBuses(); }, 15000);
+
+            // 🕘 Report পেজে সর্বশেষ ২০টা history entry দেখানো (দুই রুট মিলিয়ে) —
+            // শুধু সাম্প্রতিক ইতিহাস, বেশি read/bandwidth এড়াতে limitToLast(20) ব্যবহার করা হয়েছে।
+            ["campus_city", "boromath_campus"].forEach(direction => {
+                const histRef = ref(db, `history/${direction}`);
+                onValue(histRef, () => renderRecentHistory(db, ref, query, limitToLast, get));
+            });
+
+            async function renderRecentHistory(db, ref, query, limitToLast, get) {
+                const listEl = document.getElementById("historyList");
+                if (!listEl) return;
+                try {
+                    const entries = [];
+                    for (const direction of ["campus_city", "boromath_campus"]) {
+                        const snap = await get(ref(db, `history/${direction}`));
+                        const val = snap.val();
+                        if (!val) continue;
+                        Object.values(val).forEach(busHist => {
+                            Object.values(busHist).forEach(entry => entries.push({ ...entry, direction }));
+                        });
+                    }
+                    entries.sort((a, b) => b.time - a.time);
+                    const top = entries.slice(0, 20);
+                    if (!top.length) { listEl.innerHTML = "<p style='color:#999'>এখনো কোনো ইতিহাস নেই।</p>"; return; }
+                    listEl.innerHTML = top.map(e => {
+                        const dirLabel = e.direction === "campus_city" ? "ক্যাম্পাস→শহর" : "বড়মাঠ→ক্যাম্পাস";
+                        const ago = Math.max(0, Math.round((Date.now() - e.time) / 60000));
+                        return `<div style="padding:8px 0;border-bottom:1px solid #f0f0f0">
+                            <b>${e.name}</b> (${dirLabel}) → ${e.stopName}
+                            <br><span style="color:#999">${ago} মিনিট আগে • ${e.updatedBy || "unknown"}</span>
+                        </div>`;
+                    }).join("");
+                } catch (err) {
+                    console.error("History render error:", err);
+                }
+            }
         } catch (err) {
             console.error("Firebase load failed:", err);
             // Firebase লোড না হলেও বাকি পাতা (navigation, dropdown) স্বাভাবিক থাকবে —
